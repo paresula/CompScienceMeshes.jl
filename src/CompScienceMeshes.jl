@@ -27,6 +27,7 @@ export meshcuboid, meshcylinder, meshdisk, meshicosphere, meshmobius, meshrectan
 export gmshcuboid, gmshrectangle, gmshsphere
 export tetmeshsphere, tetmeshcuboid, tetgmshcuboid, meshball
 export subdMesh
+export CellData, cellvalue
 # mesh interface
 export dimension, universedimension, vertextype, coordtype
 export numvertices, vertices

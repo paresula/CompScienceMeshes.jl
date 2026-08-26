@@ -531,7 +531,7 @@ function skeleton(mesh, dim::Int; sort=:spacefillingcurve)
 
     sk = skeleton_fast(mesh,Val{dim})
     sort != :spacefillingcurve && return sk
-    
+
     # sort the simplices on a SFC
     simplices = cells(sk)
     # ctrs = [sum(cellvertices(sk,c))/(dim+1) for c in sk]
@@ -699,7 +699,7 @@ end
 # import InteractiveUtils
 
 function connectivity2(kcells::AbstractMesh, mcells::AbstractMesh)
-    
+
     @assert dimension(kcells) < dimension(mcells)
 
     npos = -1
@@ -1012,7 +1012,7 @@ function orient(mesh::Mesh)
     function f(mesh,i,v)
         v == :up && return
         cell = C[i]
-        mesh.faces[i] = fliporientation(cell) 
+        mesh.faces[i] = fliporientation(cell)
     end
 
     breadthfirst(f, mesh, root)
@@ -1030,3 +1030,47 @@ function convert(::Type{NewT}, mesh::Mesh{U,D1,T}) where {NewT<:Real,U,D1,T}
     vertices=[convert(SVector{U,NewT}, vertex) for vertex in mesh.vertices]
     return Mesh(vertices, mesh.faces)
 end
+
+"""
+    CellData(mesh, values)
+
+Associate one value with each cell of `mesh`. The value at index `p`
+corresponds to the cell identified by pointer `p` in `mesh`.
+
+The number of values must equal `numcells(mesh)`.
+
+!!! warning
+    `CellData` is tied to the cell ordering of its owning mesh. Mesh import and operations that construct spatially sorted meshes, such as
+    `skeleton`, may produce a cell ordering different from the source ordering. Construct the data after the
+    mesh has reached its final ordering, or apply the same permutation to the
+    values. The association is not transferred automatically to copied,
+    reordered, or refined meshes.
+"""
+struct CellData{M<:AbstractMesh,V}
+    mesh::M
+    values::V
+
+    function CellData(mesh::M, values::V) where {M<:AbstractMesh,V}
+        length(values) == numcells(mesh) ||
+            throw(DimensionMismatch(
+                "expected $(numcells(mesh)) cell values, got $(length(values))"
+            ))
+
+        new{M,V}(mesh, values)
+    end
+end
+
+function cellvalue(data::CellData, m::AbstractMesh, p)
+    data.mesh === m || throw(ArgumentError("Data does not belong to selected mesh"))
+    return data.values[p]
+end
+
+function cellvalue(data::CellData, p)
+    return data.values[p]
+end
+
+Base.length(data::CellData) = length(data.values)
+Base.eltype(data::CellData) = eltype(data.values)
+Base.eltype(::Type{CellData{M,V}}) where {M,V} = eltype(V)
+
+Base.getindex(data::CellData, p) = cellvalue(data, p)

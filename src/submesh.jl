@@ -68,7 +68,7 @@ end
 
 function vertextype(m::SubMesh) vertextype(m.supermesh) end
 function celltype(m::SubMesh) celltype(m.supermesh) end
-function coordtype(m::SubMesh) coordtype(m.supermesh) end 
+function coordtype(m::SubMesh) coordtype(m.supermesh) end
 function dimension(m::SubMesh) dimension(m.supermesh) end
 function universedimension(m::SubMesh) universedimension(m.supermesh) end
 function parent(m::SubMesh) m.supermesh end
@@ -104,3 +104,13 @@ restrict(sm, cell) = sm.sup2sub[cell]
 
 # chart(mesh::SubMesh, cell) = simplex(vertices(mesh,cell))
 chart(mesh::SubMesh, p) = chart(mesh.supermesh, mesh.sub2sup[p])
+
+function cellvalue(data::CellData, sm::SubMesh, p)
+    if data.mesh === sm
+        return data.values[p]
+    elseif parent(sm) === data.mesh
+        return data.values[extend(sm, p)]
+    else
+        throw(ArgumentError("data does not belong to the selected mesh"))
+    end
+end
